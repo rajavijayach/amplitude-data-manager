@@ -1,3 +1,10 @@
+# 🚀 Support & Connect
+
+[![Star](https://img.shields.io/github/stars/rajavijayach/amplitude-data-manager?style=social)](https://github.com/rajavijayach/amplitude-data-manager/stargazers)
+[![Fork](https://img.shields.io/github/forks/rajavijayach/amplitude-data-manager?style=social)](https://github.com/rajavijayach/amplitude-data-manager/fork)
+
+👉 [Visit the GitHub Repository](https://github.com/rajavijayach/amplitude-data-manager)
+
 # Amplitude Data Manager
 
 A comprehensive web-based tool for managing your Amplitude data. Upload CSV files to update user properties or send events directly to your Amplitude project using their APIs.
