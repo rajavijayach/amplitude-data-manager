@@ -3,7 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Amplitude Identity Updater</title>
+    <title>Amplitude Data Manager | Upload & Update User Properties, Send Events</title>
+    <meta name="description" content="Amplitude Data Manager lets you securely upload CSVs to update user properties and send events to Amplitude. Fast, private, and easy to use.">
+    <meta name="keywords" content="Amplitude, Data Manager, CSV Upload, User Properties, Events, Analytics, Identity Updater">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://yourdomain.com/">
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Amplitude Data Manager">
+    <meta property="og:description" content="Upload CSVs to update user properties or send events to Amplitude. Secure, fast, and private.">
+    <meta property="og:url" content="https://yourdomain.com/">
+    <meta property="og:image" content="https://yourdomain.com/og-image.png">
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Amplitude Data Manager">
+    <meta name="twitter:description" content="Upload CSVs to update user properties or send events to Amplitude. Secure, fast, and private.">
+    <meta name="twitter:image" content="https://yourdomain.com/og-image.png">
+        <!-- FAQ Structured Data -->
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": [
+                {
+                    "@type": "Question",
+                    "name": "Is my Amplitude API key safe?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Yes. Your API key is only used client-side and is never stored or sent anywhere except Amplitude's official API."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "What format should my CSV file be?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Your CSV must have a header row. For user properties, include a 'user_id' column. For events, include 'event_type' and either 'user_id' or 'device_id'."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "How many rows can I upload at once?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Up to 1,000 rows per batch are sent to Amplitude, following their API limits. Large files are automatically split into batches."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "Are my uploads private?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Yes. All processing happens in your browser. No data is stored or shared with third parties."
+                    }
+                }
+            ]
+        }
+        </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -65,11 +121,11 @@
 </head>
 <body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen">
 
-    <div class="w-full max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8 space-y-6">
+    <main class="w-full max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8 space-y-6" itemscope itemtype="https://schema.org/WebApplication">
         <!-- Header Section -->
         <div class="text-center">
-            <h1 class="text-3xl font-bold text-gray-900">Amplitude Data Manager</h1>
-            <p class="text-gray-600 mt-2">Upload CSV data to update user properties or send events to Amplitude.</p>
+            <h1 class="text-3xl font-bold text-gray-900" itemprop="name">Amplitude Data Manager</h1>
+            <p class="text-gray-600 mt-2" itemprop="description">Upload CSV data to update user properties or send events to Amplitude.</p>
         </div>
 
         <!-- Tab Navigation -->
@@ -270,12 +326,34 @@
 
         <!-- Status Log -->
         <div id="statusSection" class="hidden">
-            <h3 class="text-lg font-medium text-gray-900 mb-2">Update Status</h3>
+        <h2 class="text-lg font-medium text-gray-900 mb-2">Update Status</h2>
             <div id="logContainer" class="log-container bg-gray-900 text-white font-mono text-sm p-4 rounded-md">
                 <!-- Logs will be appended here -->
             </div>
         </div>
-    </div>
+        <!-- FAQ Section -->
+        <section class="mt-12" aria-labelledby="faq-heading">
+            <h2 id="faq-heading" class="text-base font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
+            <div class="space-y-4">
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-800">Is my Amplitude API key safe?</h3>
+                    <p class="text-sm text-gray-600">Yes. Your API key is only used client-side and is never stored or sent anywhere except Amplitude's official API.</p>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-800">What format should my CSV file be?</h3>
+                    <p class="text-sm text-gray-600">Your CSV must have a header row. For user properties, include a <code class="bg-gray-200 px-1 rounded">user_id</code> column. For events, include <code class="bg-gray-200 px-1 rounded">event_type</code> and either <code class="bg-gray-200 px-1 rounded">user_id</code> or <code class="bg-gray-200 px-1 rounded">device_id</code>.</p>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-800">How many rows can I upload at once?</h3>
+                    <p class="text-sm text-gray-600">Up to 1,000 rows per batch are sent to Amplitude, following their API limits. Large files are automatically split into batches.</p>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-800">Are my uploads private?</h3>
+                    <p class="text-sm text-gray-600">Yes. All processing happens in your browser. No data is stored or shared with third parties.</p>
+                </div>
+            </div>
+        </section>
+    </main>
 
     <script>
         // --- Tab Management ---
