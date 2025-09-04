@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amplitude Identity Updater</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .log-container {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .tab-button.active {
+            border-color: #4F46E5;
+            color: #4F46E5;
+        }
+        .tab-content {
+            padding-top: 1.5rem;
+        }
+        .tab-content.hidden {
+            display: none;
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #374151;
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #374151 transparent transparent transparent;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen">
+
+    <div class="w-full max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8 space-y-6">
+        <!-- Header Section -->
+        <div class="text-center">
+            <h1 class="text-3xl font-bold text-gray-900">Amplitude Data Manager</h1>
+            <p class="text-gray-600 mt-2">Upload CSV data to update user properties or send events to Amplitude.</p>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="border-b border-gray-200">
+            <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                <button id="identityTab" class="tab-button active whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm focus:outline-none border-indigo-500 text-indigo-600" onclick="switchTab('identity')">
+                    User Properties
+                </button>
+                <button id="eventsTab" class="tab-button whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm focus:outline-none border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" onclick="switchTab('events')">
+                    Events
+                </button>
+            </nav>
+        </div>
+
+        <!-- Tab Content -->
+        <div id="identityContent" class="tab-content">
+            <!-- Step 1: API Key Input -->
+            <div class="step mb-8">
+                <div class="flex items-center gap-2 mb-3">
+                    <label for="apiKey" class="block text-sm font-medium text-gray-700">Step 1: Enter Your Amplitude API Key</label>
+                    <div class="tooltip">
+                        <svg class="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="tooltiptext">Find your API key in Amplitude under Settings → Projects → [Your Project] → General</span>
+                    </div>
+                </div>
+                <input type="password" id="apiKey" name="apiKey" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Your Amplitude Project API Key">
+                <p class="text-xs text-gray-500 mt-3">Your API key is handled client-side and is not stored.</p>
+            </div>
+
+            <!-- Step 2: CSV File Upload -->
+            <div class="step mb-8">
+                <div class="flex items-center gap-2 mb-3">
+                    <label for="csvFile" class="block text-sm font-medium text-gray-700">Step 2: Upload CSV File</label>
+                    <div class="tooltip">
+                        <svg class="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="tooltiptext">CSV must have headers in first row. The 'user_id' column is required to identify users.</span>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mb-4">The first row must be a header. One column must be named 'user_id'.</p>
+                <div class="mb-4">
+                    <button id="downloadSampleBtn" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Download Sample CSV
+                    </button>
+                </div>
+                <input type="file" id="csvFile" accept=".csv" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+            </div>
+
+            <!-- Step 3: Data Preview and Action -->
+            <div id="previewSection" class="hidden">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-lg font-medium text-gray-900">Data Preview</h3>
+                    <div class="text-sm text-gray-600">
+                        <span id="rowCount" class="font-medium"></span>
+                        <span class="ml-2 text-gray-500">(showing first 100 rows)</span>
+                    </div>
+                </div>
+                <div class="table-container border border-gray-200 rounded-lg">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50" id="csvHeader"></thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="csvBody"></tbody>
+                    </table>
+                </div>
+                <div class="mt-6 text-center">
+                    <button id="updateButton" class="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                        Update Identities in Amplitude
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Events Tab Content -->
+        <div id="eventsContent" class="tab-content hidden">
+            <!-- Step 1: API Key Input for Events -->
+            <div class="step mb-8">
+                <div class="flex items-center gap-2 mb-3">
+                    <label for="eventsApiKey" class="block text-sm font-medium text-gray-700">Step 1: Enter Your Amplitude API Key</label>
+                    <div class="tooltip">
+                        <svg class="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="tooltiptext">Same API key as user properties. Find it in Amplitude under Settings → Projects → [Your Project] → General</span>
+                    </div>
+                </div>
+                <input type="password" id="eventsApiKey" name="eventsApiKey" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Your Amplitude Project API Key">
+                <p class="text-xs text-gray-500 mt-3">Your API key is handled client-side and is not stored.</p>
+            </div>
+
+            <!-- Step 2: CSV File Upload for Events -->
+            <div class="step mb-8">
+                <div class="flex items-center gap-2 mb-3">
+                    <label for="eventsCsvFile" class="block text-sm font-medium text-gray-700">Step 2: Upload Events CSV File</label>
+                    <div class="tooltip">
+                        <svg class="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="tooltiptext">Events track user actions. Each row represents one event with its properties.</span>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mb-4">The first row must be a header. Required columns: 'event_type' and either 'user_id' or 'device_id'. Optional: 'time' (milliseconds since epoch), 'session_id', other event properties.</p>
+                <div class="mb-4">
+                    <button id="downloadEventsSampleBtn" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Download Sample Events CSV
+                    </button>
+                </div>
+                <input type="file" id="eventsCsvFile" accept=".csv" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+            </div>
+
+            <!-- Collapsible CSV Structure Guide -->
+            <div class="step mb-8">
+                <button type="button" id="csvGuideToggle" class="w-full flex items-center justify-between text-left text-sm font-medium text-gray-700 hover:text-gray-900 focus:outline-none p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors" onclick="toggleCsvGuide()">
+                    <div class="flex items-center gap-2">
+                        <span>📋 CSV Structure Guide & Examples</span>
+                        <div class="tooltip">
+                            <svg class="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span class="tooltiptext">Click to see detailed examples of how to structure your events CSV file</span>
+                        </div>
+                    </div>
+                    <svg id="csvGuideIcon" class="w-4 h-4 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+                <div id="csvGuideContent" class="hidden mt-4 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <div class="space-y-6">
+                        <div>
+                            <h4 class="font-medium text-gray-900 mb-2">CSV Structure:</h4>
+                            <div class="bg-white p-3 rounded border font-mono text-xs overflow-x-auto">
+                                <div class="text-gray-600">event_type,user_id,product_id,product_name,price,category</div>
+                                <div>Product Viewed,user123,sku_123,Noise Cancelling Headphones,199.99,Electronics</div>
+                                <div>Product Viewed,user456,sku_124,Wireless Mouse,29.99,Electronics</div>
+                                <div>Purchase,user789,sku_125,Coffee Mug,12.50,Home & Garden</div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h4 class="font-medium text-gray-900 mb-2">How it works:</h4>
+                            <ul class="text-sm text-gray-600 space-y-1 list-disc list-inside">
+                                <li><strong>Required:</strong> <code class="bg-gray-200 px-1 rounded">event_type</code> and either <code class="bg-gray-200 px-1 rounded">user_id</code> or <code class="bg-gray-200 px-1 rounded">device_id</code></li>
+                                <li><strong>Event properties:</strong> Any additional columns (like product_id, product_name, price) automatically become event properties</li>
+                                <li><strong>Optional:</strong> <code class="bg-gray-200 px-1 rounded">time</code> (milliseconds since epoch), <code class="bg-gray-200 px-1 rounded">session_id</code></li>
+                                <li><strong>Auto-conversion:</strong> Numeric values are automatically detected and converted</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h4 class="font-medium text-gray-900 mb-2">Result in Amplitude:</h4>
+                            <div class="bg-white p-3 rounded border font-mono text-xs">
+                                <div class="text-gray-600">// Event sent to Amplitude:</div>
+                                <div>{</div>
+                                <div class="ml-2">"event_type": "Product Viewed",</div>
+                                <div class="ml-2">"user_id": "user123",</div>
+                                <div class="ml-2">"event_properties": {</div>
+                                <div class="ml-4">"product_id": "sku_123",</div>
+                                <div class="ml-4">"product_name": "Noise Cancelling Headphones",</div>
+                                <div class="ml-4">"price": 199.99,</div>
+                                <div class="ml-4">"category": "Electronics"</div>
+                                <div class="ml-2">}</div>
+                                <div>}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Events Data Preview and Action -->
+            <div id="eventsPreviewSection" class="hidden">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-lg font-medium text-gray-900">Events Data Preview</h3>
+                    <div class="text-sm text-gray-600">
+                        <span id="eventsRowCount" class="font-medium"></span>
+                        <span class="ml-2 text-gray-500">(showing first 100 rows)</span>
+                    </div>
+                </div>
+                <div class="table-container border border-gray-200 rounded-lg">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50" id="eventsCsvHeader"></thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="eventsCsvBody"></tbody>
+                    </table>
+                </div>
+                <div class="mt-6 text-center">
+                    <button id="sendEventsButton" class="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                        Send Events to Amplitude
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Log -->
+        <div id="statusSection" class="hidden">
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Update Status</h3>
+            <div id="logContainer" class="log-container bg-gray-900 text-white font-mono text-sm p-4 rounded-md">
+                <!-- Logs will be appended here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Tab Management ---
+        function switchTab(tabName) {
+            // Hide all tab content
+            document.getElementById('identityContent').classList.add('hidden');
+            document.getElementById('eventsContent').classList.add('hidden');
+            
+            // Remove active class from all tabs
+            document.getElementById('identityTab').classList.remove('active');
+            document.getElementById('eventsTab').classList.remove('active');
+            document.getElementById('identityTab').classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+            document.getElementById('identityTab').classList.remove('border-indigo-500', 'text-indigo-600');
+            document.getElementById('eventsTab').classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+            document.getElementById('eventsTab').classList.remove('border-indigo-500', 'text-indigo-600');
+            
+            // Show selected tab content and mark tab as active
+            if (tabName === 'identity') {
+                document.getElementById('identityContent').classList.remove('hidden');
+                document.getElementById('identityTab').classList.add('active', 'border-indigo-500', 'text-indigo-600');
+                document.getElementById('identityTab').classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+            } else if (tabName === 'events') {
+                document.getElementById('eventsContent').classList.remove('hidden');
+                document.getElementById('eventsTab').classList.add('active', 'border-indigo-500', 'text-indigo-600');
+                document.getElementById('eventsTab').classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+            }
+        }
+
+        // --- CSV Guide Toggle ---
+        function toggleCsvGuide() {
+            const content = document.getElementById('csvGuideContent');
+            const icon = document.getElementById('csvGuideIcon');
+            
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.classList.add('rotate-180');
+            } else {
+                content.classList.add('hidden');
+                icon.classList.remove('rotate-180');
+            }
+        }
+
+        // --- Identity Tab Elements ---
+        const csvFileInput = document.getElementById('csvFile');
+        const apiKeyInput = document.getElementById('apiKey');
+        const updateButton = document.getElementById('updateButton');
+        const downloadSampleBtn = document.getElementById('downloadSampleBtn');
+        const previewSection = document.getElementById('previewSection');
+        const statusSection = document.getElementById('statusSection');
+        const logContainer = document.getElementById('logContainer');
+        const csvHeader = document.getElementById('csvHeader');
+        const csvBody = document.getElementById('csvBody');
+        const rowCount = document.getElementById('rowCount');
+
+        // --- Events Tab Elements ---
+        const eventsCsvFileInput = document.getElementById('eventsCsvFile');
+        const eventsApiKeyInput = document.getElementById('eventsApiKey');
+        const sendEventsButton = document.getElementById('sendEventsButton');
+        const downloadEventsSampleBtn = document.getElementById('downloadEventsSampleBtn');
+        const eventsPreviewSection = document.getElementById('eventsPreviewSection');
+        const eventsCsvHeader = document.getElementById('eventsCsvHeader');
+        const eventsCsvBody = document.getElementById('eventsCsvBody');
+        const eventsRowCount = document.getElementById('eventsRowCount');
+
+        let parsedData = [];
+        let eventsData = [];
+
+        // --- Sample CSV Download ---
+        downloadSampleBtn.addEventListener('click', () => {
+            const sampleCSVData = 'user_id,age,gender\nsam@example.com,30,male\njohn.doe@example.com,25,female\njane.smith@example.com,35,male';
+            downloadCSV(sampleCSVData, 'sample_amplitude_user_properties.csv');
+        });
+
+        // --- Events Sample CSV Download ---
+        downloadEventsSampleBtn.addEventListener('click', () => {
+            const sampleEventsCSVData = 'event_type,user_id,device_id,time,session_id,product_name,price,category\nButton Click,user123,,1640995200000,1640995200000,Premium Plan,29.99,subscription\nPage View,user456,device789,1640995260000,1640995200000,,,navigation\nPurchase,user123,,1640995320000,1640995200000,Premium Plan,29.99,subscription';
+            downloadCSV(sampleEventsCSVData, 'sample_amplitude_events.csv');
+        });
+
+        function downloadCSV(csvData, filename) {
+            const blob = new Blob([csvData], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+
+        // --- 1. CSV Parsing and Display ---
+        csvFileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) {
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                try {
+                    parsedData = parseCSV(text);
+                    if (parsedData.length > 0) {
+                        displayCSV(parsedData, csvHeader, csvBody, rowCount);
+                        previewSection.classList.remove('hidden');
+                    } else {
+                        logMessage('ERROR: CSV file is empty or could not be parsed.', 'error');
+                        previewSection.classList.add('hidden');
+                    }
+                } catch (error) {
+                    logMessage(`ERROR parsing CSV: ${error.message}`, 'error');
+                    previewSection.classList.add('hidden');
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        // --- Events CSV Parsing and Display ---
+        eventsCsvFileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) {
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                try {
+                    eventsData = parseCSV(text);
+                    if (eventsData.length > 0) {
+                        displayCSV(eventsData, eventsCsvHeader, eventsCsvBody, eventsRowCount);
+                        eventsPreviewSection.classList.remove('hidden');
+                    } else {
+                        logMessage('ERROR: Events CSV file is empty or could not be parsed.', 'error');
+                        eventsPreviewSection.classList.add('hidden');
+                    }
+                } catch (error) {
+                    logMessage(`ERROR parsing Events CSV: ${error.message}`, 'error');
+                    eventsPreviewSection.classList.add('hidden');
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        function parseCSV(text) {
+            const lines = text.trim().split('\n');
+            if (lines.length < 2) {
+                throw new Error("CSV must have a header row and at least one data row.");
+            }
+            
+            const header = lines[0].split(',').map(h => h.trim());
+            const data = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',').map(v => v.trim());
+                if (values.length === header.length) {
+                    let rowObject = {};
+                    header.forEach((key, index) => {
+                        rowObject[key] = values[index];
+                    });
+                    data.push(rowObject);
+                }
+            }
+            return data;
+        }
+
+        function displayCSV(data, headerElement, bodyElement, countElement) {
+            // Clear previous preview
+            headerElement.innerHTML = '';
+            bodyElement.innerHTML = '';
+
+            if (data.length === 0) return;
+            
+            // Update row count
+            countElement.textContent = `${data.length} rows`;
+            
+            const headers = Object.keys(data[0]);
+            const headerRow = document.createElement('tr');
+            headers.forEach(headerText => {
+                const th = document.createElement('th');
+                th.scope = 'col';
+                th.className = 'px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider';
+                th.textContent = headerText;
+                headerRow.appendChild(th);
+            });
+            headerElement.appendChild(headerRow);
+
+            // Display first 100 rows as a preview
+            const previewData = data.slice(0, 100);
+            previewData.forEach(row => {
+                const tr = document.createElement('tr');
+                headers.forEach(header => {
+                    const td = document.createElement('td');
+                    td.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
+                    td.textContent = row[header];
+                    tr.appendChild(td);
+                });
+                bodyElement.appendChild(tr);
+            });
+        }
+        
+        // --- 2. Amplitude API Call ---
+        updateButton.addEventListener('click', async () => {
+            const apiKey = apiKeyInput.value.trim();
+            
+            // --- Validations ---
+            if (!apiKey) {
+                logMessage('ERROR: Amplitude API Key is required.', 'error');
+                alert('Please enter your Amplitude API Key.');
+                return;
+            }
+            if (parsedData.length === 0) {
+                 logMessage('ERROR: No CSV data to process.', 'error');
+                 alert('Please upload a valid CSV file.');
+                 return;
+            }
+            if (!Object.keys(parsedData[0]).includes('user_id')) {
+                logMessage('ERROR: CSV file must contain a "user_id" column.', 'error');
+                alert('The uploaded CSV is missing the required "user_id" column.');
+                return;
+            }
+
+            // --- Disable button and show status ---
+            updateButton.disabled = true;
+            updateButton.textContent = 'Updating...';
+            statusSection.classList.remove('hidden');
+            logContainer.innerHTML = '';
+            logMessage(`Starting update for ${parsedData.length} users...`);
+
+            const chunks = chunkArray(parsedData, 1000); // Amplitude's Identify API batch limit is 1000
+            let successCount = 0;
+            let errorCount = 0;
+
+            for (let i = 0; i < chunks.length; i++) {
+                const chunk = chunks[i];
+                logMessage(`Processing batch ${i + 1} of ${chunks.length} (${chunk.length} users)...`);
+                
+                const identifications = chunk.map(row => {
+                    const userProperties = { ...row };
+                    // The user_id should not be in user_properties
+                    delete userProperties.user_id;
+
+                    return {
+                        user_id: row.user_id,
+                        user_properties: userProperties
+                    };
+                });
+
+                try {
+                    // Create form data as required by Amplitude API
+                    const formData = new URLSearchParams();
+                    formData.append('api_key', apiKey);
+                    formData.append('identification', JSON.stringify(identifications));
+
+                    const response = await fetch('https://api2.amplitude.com/identify', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'Accept': '*/*'
+                        },
+                        body: formData
+                    });
+
+                    const resultText = await response.text();
+                    if (response.ok && resultText === 'success') {
+                        logMessage(`Batch ${i + 1} successful.`, 'success');
+                        successCount += chunk.length;
+                    } else {
+                        logMessage(`Batch ${i + 1} failed. Status: ${response.status}. Response: ${resultText}`, 'error');
+                        errorCount += chunk.length;
+                    }
+                } catch (error) {
+                    logMessage(`Batch ${i + 1} failed with a network error: ${error.message}`, 'error');
+                    errorCount += chunk.length;
+                }
+            }
+            
+            logMessage('--- Update Complete ---', 'info');
+            logMessage(`Successfully updated: ${successCount} users.`, 'success');
+            logMessage(`Failed to update: ${errorCount} users.`, 'error');
+
+            updateButton.disabled = false;
+            updateButton.textContent = 'Update Identities in Amplitude';
+        });
+
+        // --- 3. Events API Call ---
+        sendEventsButton.addEventListener('click', async () => {
+            const apiKey = eventsApiKeyInput.value.trim();
+            
+            // --- Validations ---
+            if (!apiKey) {
+                logMessage('ERROR: Amplitude API Key is required.', 'error');
+                alert('Please enter your Amplitude API Key.');
+                return;
+            }
+            if (eventsData.length === 0) {
+                 logMessage('ERROR: No Events CSV data to process.', 'error');
+                 alert('Please upload a valid Events CSV file.');
+                 return;
+            }
+            if (!Object.keys(eventsData[0]).includes('event_type')) {
+                logMessage('ERROR: Events CSV file must contain an "event_type" column.', 'error');
+                alert('The uploaded Events CSV is missing the required "event_type" column.');
+                return;
+            }
+            if (!Object.keys(eventsData[0]).includes('user_id') && !Object.keys(eventsData[0]).includes('device_id')) {
+                logMessage('ERROR: Events CSV file must contain either "user_id" or "device_id" column.', 'error');
+                alert('The uploaded Events CSV is missing both "user_id" and "device_id" columns. At least one is required.');
+                return;
+            }
+
+            // --- Disable button and show status ---
+            sendEventsButton.disabled = true;
+            sendEventsButton.textContent = 'Sending Events...';
+            statusSection.classList.remove('hidden');
+            logContainer.innerHTML = '';
+            logMessage(`Starting events upload for ${eventsData.length} events...`);
+
+            const chunks = chunkArray(eventsData, 1000); // Amplitude's HTTP v2 API batch limit is 2000, but we use 1000 for safety
+            let successCount = 0;
+            let errorCount = 0;
+
+            for (let i = 0; i < chunks.length; i++) {
+                const chunk = chunks[i];
+                logMessage(`Processing events batch ${i + 1} of ${chunks.length} (${chunk.length} events)...`);
+                
+                const events = chunk.map(row => {
+                    const event = {
+                        event_type: row.event_type
+                    };
+
+                    // Add required user_id or device_id
+                    if (row.user_id) event.user_id = row.user_id;
+                    if (row.device_id) event.device_id = row.device_id;
+
+                    // Add optional time field (convert to number if provided)
+                    if (row.time) {
+                        const timeValue = parseInt(row.time);
+                        if (!isNaN(timeValue)) {
+                            event.time = timeValue;
+                        }
+                    }
+
+                    // Add optional session_id (convert to number if provided)
+                    if (row.session_id) {
+                        const sessionValue = parseInt(row.session_id);
+                        if (!isNaN(sessionValue)) {
+                            event.session_id = sessionValue;
+                        }
+                    }
+
+                    // Add other fields as event_properties
+                    const eventProperties = {};
+                    const reservedFields = ['event_type', 'user_id', 'device_id', 'time', 'session_id'];
+                    Object.keys(row).forEach(key => {
+                        if (!reservedFields.includes(key) && row[key] !== '') {
+                            // Try to convert numbers
+                            const numValue = parseFloat(row[key]);
+                            if (!isNaN(numValue) && isFinite(numValue)) {
+                                eventProperties[key] = numValue;
+                            } else {
+                                eventProperties[key] = row[key];
+                            }
+                        }
+                    });
+
+                    if (Object.keys(eventProperties).length > 0) {
+                        event.event_properties = eventProperties;
+                    }
+
+                    return event;
+                });
+
+                try {
+                    const payload = {
+                        api_key: apiKey,
+                        events: events
+                    };
+
+                    const response = await fetch('https://api2.amplitude.com/2/httpapi', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+                    if (response.ok && result.code === 200) {
+                        logMessage(`Events batch ${i + 1} successful. Ingested ${result.events_ingested} events.`, 'success');
+                        successCount += result.events_ingested;
+                    } else {
+                        logMessage(`Events batch ${i + 1} failed. Status: ${response.status}. Response: ${JSON.stringify(result)}`, 'error');
+                        errorCount += chunk.length;
+                    }
+                } catch (error) {
+                    logMessage(`Events batch ${i + 1} failed with a network error: ${error.message}`, 'error');
+                    errorCount += chunk.length;
+                }
+            }
+            
+            logMessage('--- Events Upload Complete ---', 'info');
+            logMessage(`Successfully sent: ${successCount} events.`, 'success');
+            logMessage(`Failed to send: ${errorCount} events.`, 'error');
+
+            sendEventsButton.disabled = false;
+            sendEventsButton.textContent = 'Send Events to Amplitude';
+        });
+
+        // --- 3. Utility Functions ---
+        function logMessage(message, type = 'info') {
+            const p = document.createElement('p');
+            let colorClass = 'text-gray-300';
+            if (type === 'success') colorClass = 'text-green-400';
+            if (type === 'error') colorClass = 'text-red-400';
+            p.className = colorClass;
+            p.textContent = `> ${message}`;
+            logContainer.appendChild(p);
+            logContainer.scrollTop = logContainer.scrollHeight; // Auto-scroll
+        }
+        
+        function chunkArray(array, size) {
+            const chunks = [];
+            for (let i = 0; i < array.length; i += size) {
+                chunks.push(array.slice(i, i + size));
+            }
+            return chunks;
+        }
+
+    </script>
+</body>
+</html>
