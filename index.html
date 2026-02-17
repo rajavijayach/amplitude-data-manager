@@ -79,7 +79,14 @@
             color: #4F46E5;
         }
         .tab-content {
+            margin-top: 0;
             padding-top: 1.5rem;
+        }
+        .tab-content-wrapper {
+            overflow-anchor: none;
+        }
+        .tab-content > .step:first-child {
+            margin-top: 0 !important;
         }
         .tab-content.hidden {
             display: none;
@@ -119,7 +126,7 @@
         }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen">
+<body class="bg-gray-100 text-gray-800 min-h-screen py-10 px-4">
 
     <main class="w-full max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8 space-y-6" itemscope itemtype="https://schema.org/WebApplication">
         <!-- Header Section -->
@@ -135,10 +142,10 @@
         <!-- Tab Navigation -->
         <div class="border-b border-gray-200">
             <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-                <button id="identityTab" class="tab-button active whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm focus:outline-none border-indigo-500 text-indigo-600" onclick="switchTab('identity')">
+                <button type="button" id="identityTab" class="tab-button active whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm focus:outline-none border-indigo-500 text-indigo-600" onclick="switchTab('identity')">
                     User Properties
                 </button>
-                <button id="eventsTab" class="tab-button whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm focus:outline-none border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" onclick="switchTab('events')">
+                <button type="button" id="eventsTab" class="tab-button whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm focus:outline-none border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" onclick="switchTab('events')">
                     Events
                 </button>
             </nav>
